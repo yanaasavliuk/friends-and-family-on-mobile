@@ -20,6 +20,8 @@ jobs:
           node-version: '20'
           cache: 'npm'
       - run: npm ci
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
       - run: npm run build
       - uses: actions/configure-pages@v4
       - uses: actions/upload-pages-artifact@v3
