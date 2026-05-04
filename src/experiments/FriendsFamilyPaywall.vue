@@ -487,18 +487,26 @@ const ctaDisabled = computed(
                   </template>
                 </template>
 
-                <!-- "YEARLY PLAN ONLY" pill — yearly state: ABOVE pricing (inside pricing block).
-                     Mobile always uses this. Tablet monthly moves the pill below (see sibling div). -->
+                <!-- "YEARLY PLAN ONLY" pill — iOS mobile only (Android renders it
+                     as a sibling of pricing, see below). On tablet the pill is also
+                     handled separately for the yearly/monthly states. -->
                 <div
-                  v-if="tier.yearlyOnly && (!isTablet || !isMonthly)"
+                  v-if="tier.yearlyOnly && !isTablet && platform !== 'android'"
                   class="tier-yearly-pill"
                 >{{ t.yearlyPlanOnly }}</div>
+              </div>
 
-                <!-- Android Google Play disclaimer (below pricing inside the card) -->
-                <p
-                  v-if="platform === 'android' && !isTablet && !isMonthly && pricing[tier.id].yearly"
-                  class="tier-android-disclaimer"
-                >
+              <!-- Android F&F: pill + Google Play disclaimer as a sibling group of
+                   pricing. Per Figma 7066:52215 the "Mobile Phone" group sits 16px
+                   below pricing (parent gap-16) with 24px between pill and disclaimer. -->
+              <div
+                v-if="tier.yearlyOnly && platform === 'android' && !isTablet && !isMonthly && pricing[tier.id].yearly"
+                class="tier-android-pill-group"
+              >
+                <div class="tier-yearly-pill tier-yearly-pill--android">
+                  {{ t.yearlyPlanOnly }}
+                </div>
+                <p class="tier-android-disclaimer">
                   {{ t.androidGooglePlayDisclaimerYearly(
                     `$${formatPrice(pricing[tier.id].yearly!.annualTotal)}`,
                     `$${formatPrice(pricing[tier.id].yearly!.monthlyRate)}/mo`
@@ -1253,8 +1261,9 @@ const ctaDisabled = computed(
   gap: 16px;
   width: 100%;
 }
-/* On F&F (where pricing block ends with the pill), use 24px to CTA */
-.tier-bottom:has(.tier-yearly-pill) {
+/* On iOS F&F (pricing block ends with the pill), use 24px between pricing and CTA.
+   Android keeps tier-bottom at gap-16 per Figma 7066:52215. */
+.paywall:not([data-platform="android"]) .tier-bottom:has(.tier-yearly-pill) {
   gap: 24px;
 }
 
@@ -1278,10 +1287,10 @@ const ctaDisabled = computed(
   justify-content: flex-end;
   min-height: 80px;
 }
-/* Mobile only: shift F&F's pricing block DOWN by the pill+gap height (~32px) so
-   the price text ($16.67 / month) sits at the same Y as the other cards' price text.
-   The pill stays grouped inside the pricing block, just visually below the aligned price. */
-.tier-grid--carousel .tier-pricing:has(.tier-yearly-pill) {
+/* iOS mobile only: shift F&F's pricing block DOWN by the pill+gap height (~32px)
+   so the price text sits at the same Y as the other cards' price text.
+   On Android the pill is a separate sibling group below pricing — no shift needed. */
+.paywall:not([data-platform="android"]) .tier-grid--carousel .tier-pricing:has(.tier-yearly-pill) {
   margin-top: 32px;
 }
 
@@ -1358,7 +1367,7 @@ const ctaDisabled = computed(
   color: var(--color-text-boldest, #fff);
   text-align: center;
 }
-/* Google Play disclaimer text below pricing on Android */
+/* Google Play disclaimer text — Inter Regular 10/14, subtle text color */
 .tier-android-disclaimer {
   font-family: var(--font-family-body, 'Inter', sans-serif);
   font-size: 10px;
@@ -1366,11 +1375,30 @@ const ctaDisabled = computed(
   line-height: 14px;
   color: var(--color-text-default, rgba(255, 255, 255, 0.72));
   text-align: center;
-  margin: 8px 0 0;
+  margin: 0;
   padding: 0;
+  width: 100%;
+  max-width: 305px;
 }
 
-/* ─── Android bottom tab bar (CTA + dots, outside the card) ─── */
+/* Android F&F: pill + disclaimer group sits as sibling of pricing inside tier-bottom.
+   Per Figma 7066:52215 "Mobile Phone" group: gap-24 between pill and disclaimer. */
+.tier-android-pill-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  width: 100%;
+  max-width: 304px;
+}
+.tier-yearly-pill--android {
+  margin: 0;
+}
+
+/* ─── Android bottom tab bar (CTA + dots, outside the card) ───
+   Per Figma 7066:52405 V6 Tab Bar Phone: pt-16 on container, dots h-10,
+   button-container pt-16 pb-8 px-12. Background is transparent (no fill,
+   no blur) per design request. */
 .android-tab-bar {
   flex-shrink: 0;
   position: relative;
@@ -1378,29 +1406,26 @@ const ctaDisabled = computed(
   flex-direction: column;
   align-items: center;
   padding-top: 16px;
-  padding-bottom: env(safe-area-inset-bottom, 8px);
+  padding-bottom: 0;
   width: 100%;
 }
+/* Android tab bar — transparent: no different background color, blends with page bg. */
 .android-tab-bar-bg {
-  position: absolute;
-  inset: 0;
-  background: rgba(38, 36, 33, 0.55);
-  backdrop-filter: blur(15.5px);
-  -webkit-backdrop-filter: blur(15.5px);
-  pointer-events: none;
+  display: none;
 }
 .android-tab-bar-dots {
   position: relative;
   z-index: 1;
   padding: 0;
-  margin-bottom: 16px;
+  margin: 0;
 }
 .android-cta-wrap {
   position: relative;
   z-index: 1;
   width: 100%;
   max-width: 500px;
-  padding: 0 12px 8px;
+  /* pt-16 above the button + pb-8 below + px-12 sides per Figma button-container */
+  padding: 16px 12px 8px;
   display: flex;
   justify-content: center;
 }
