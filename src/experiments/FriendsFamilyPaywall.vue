@@ -496,6 +496,20 @@ const ctaDisabled = computed(
                 >{{ t.yearlyPlanOnly }}</div>
               </div>
 
+              <!-- Android per-card Yearly/Monthly toggle (Gold/Platinum/Diamond only —
+                   F&F is yearly-only and uses the YEARLY PLAN ONLY pill instead). -->
+              <div
+                v-if="platform === 'android' && !isTablet && !tier.yearlyOnly"
+                class="tier-android-billing-toggle"
+              >
+                <CcSegmentedControl
+                  :labels="[t.yearly, t.monthly]"
+                  :selected="billing === 'yearly' ? 0 : 1"
+                  size="small"
+                  @segment-clicked="onCardBillingChange"
+                />
+              </div>
+
               <!-- Android: pill + Google Play disclaimer + (F&F monthly only) the
                    switch-to-yearly link as a sibling group of pricing. Per Figma
                    7066:52215 the "Mobile Phone" group sits 16px below pricing
@@ -1554,6 +1568,15 @@ const ctaDisabled = computed(
   font-size: 14px;
   font-weight: 600;
   padding: 0;
+}
+
+/* Android per-card Yearly/Monthly toggle (Gold/Platinum/Diamond) — sits inside
+   tier-bottom as a sibling of pricing and the disclaimer group. */
+.tier-android-billing-toggle {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
 }
 
 /* ─── Carousel dots (active 10x10, inactive 6x6 per Figma) ───
