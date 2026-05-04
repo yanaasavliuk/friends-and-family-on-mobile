@@ -1413,6 +1413,10 @@ const ctaDisabled = computed(
 .android-tab-bar-bg {
   display: none;
 }
+/* Higher specificity to win over `.carousel-dots { padding: 24px 0 16px }`
+   defined later in the stylesheet. Without `&.android-tab-bar-dots`, the
+   default carousel-dots padding adds 40px above and 32px below the dots. */
+.android-tab-bar .android-tab-bar-dots,
 .android-tab-bar-dots {
   position: relative;
   z-index: 1;
@@ -1469,10 +1473,11 @@ const ctaDisabled = computed(
   margin: 0;
   align-self: center;
 }
-/* Pill is shifted down by 4px so it sits visually closer to the switch link.
-   Scoped to .paywall--tablet to win specificity over `.paywall--tablet .tier-yearly-pill`. */
+/* Pill on tablet F&F monthly: sits 4px above the switch link via parent's gap-4.
+   Scoped to .paywall--tablet to win specificity over `.paywall--tablet .tier-yearly-pill`
+   (which sets margin-bottom: 4px for the YEARLY state). */
 .paywall--tablet .tier-yearly-pill--monthly {
-  margin-top: 4px;
+  margin: 0;
 }
 .paywall--tablet .tier-bottom:has(.tier-switch-link--inline) {
   gap: 4px;
@@ -1501,9 +1506,11 @@ const ctaDisabled = computed(
   color: var(--color-blue-300, #008cd1);
   text-decoration: underline;
 }
-/* When the switch link is rendered inline inside the pricing block (tablet F&F monthly) */
+/* When the switch link is rendered inline inside the pricing block (tablet F&F monthly).
+   The parent `.tier-bottom:has(.tier-switch-link--inline)` already sets gap: 4px,
+   so no extra margin needed — pill sits exactly 4px above the button. */
 .tier-switch-link--inline {
-  margin-top: 8px;
+  margin-top: 0;
   align-self: center;
   font-size: 13px;
 }
