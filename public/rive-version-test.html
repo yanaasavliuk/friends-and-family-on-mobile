@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Rive Version Test</title>
+<style>
+  body { background: #1a1a2e; color: white; font-family: monospace; padding: 20px; }
+  .test { margin: 10px 0; padding: 10px; border: 1px solid #444; }
+  .ok { color: #81b64c; }
+  .fail { color: #d04040; }
+  canvas { width: 80px; height: 80px; border: 1px solid #555; }
+</style>
+</head>
+<body>
+<h2>Rive CDN Version Tester</h2>
+<div id="log"></div>
+<div id="canvases"></div>
+
+<script>
+const versions = ['2.27.0','2.28.0','2.29.0','2.30.0','2.31.0','2.32.0','2.33.0','2.34.0','2.35.0'];
+const logEl = document.getElementById('log');
+const canvasEl = document.getElementById('canvases');
+
+function log(msg, ok) {
+  const d = document.createElement('div');
+  d.className = ok === true ? 'ok' : ok === false ? 'fail' : '';
+  d.textContent = msg;
+  logEl.appendChild(d);
+}
+
+async function testVersion(ver) {
+  return new Promise((resolve) => {
+    const iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+
+    const timeout = setTimeout(() => {
+      log(`v${ver}: TIMEOUT`, false);
+      resolve(false);
+    }, 8000);
+
+    iframe.srcdoc = `
+      <canvas id="c" width="160" height="160"></canvas>
+      <script src="https://unpkg.com/@rive-app/canvas@${ver}"><\/script>
+      <script>
+        function run() {
+          if (typeof rive === 'undefined') { setTimeout(run, 100); return; }
+
+          // Test 1: no artboard
+          var r1 = new rive.Rive({
+            src: 'membership_icons.riv',
+            canvas: document.getElementById('c'),
+            stateMachines: 'sm-main',
+            autoplay: true,
+            onLoad: function() {
+              var inputs = [];
+              try { inputs = r1.stateMachineInputs('sm-main') || []; } catch(e) {}
+              var result = { version: '${ver}', noArtboard: { loaded: true, inputs: inputs.map(function(i){return i.name}) } };
+
+              // Test 2: with artboard
+              var c2 = document.createElement('canvas');
+              c2.width = 160; c2.height = 160;
+              var r2 = new rive.Rive({
+                src: 'membership_icons.riv',
+                canvas: c2,
+                artboard: 'memberships',
+                stateMachines: 'sm-main',
+                autoplay: true,
+                onLoad: function() {
+                  var inputs2 = [];
+                  try { inputs2 = r2.stateMachineInputs('sm-main') || []; } catch(e) {}
+                  result.withArtboard = { loaded: true, inputs: inputs2.map(function(i){return i.name}) };
+                  parent.postMessage(JSON.stringify(result), '*');
+                },
+                onLoadError: function() {
+                  result.withArtboard = { loaded: false };
+                  parent.postMessage(JSON.stringify(result), '*');
+                }
+              });
+            },
+            onLoadError: function() {
+              // noArtboard failed, try withArtboard only
+              var c2 = document.createElement('canvas');
+              c2.width = 160; c2.height = 160;
+              var r2 = new rive.Rive({
+                src: 'membership_icons.riv',
+                canvas: c2,
+                artboard: 'memberships',
+                stateMachines: 'sm-main',
+                autoplay: true,
+                onLoad: function() {
+                  var inputs2 = [];
+                  try { inputs2 = r2.stateMachineInputs('sm-main') || []; } catch(e) {}
+                  parent.postMessage(JSON.stringify({ version: '${ver}', noArtboard: { loaded: false }, withArtboard: { loaded: true, inputs: inputs2.map(function(i){return i.name}) } }), '*');
+                },
+                onLoadError: function() {
+                  parent.postMessage(JSON.stringify({ version: '${ver}', noArtboard: { loaded: false }, withArtboard: { loaded: false } }), '*');
+                }
+              });
+            }
+          });
+        }
+        run();
+      <\/script>
+    `;
+
+    window.addEventListener('message', function handler(e) {
+      try {
+        const data = JSON.parse(e.data);
+        if (data.version === ver) {
+          clearTimeout(timeout);
+          window.removeEventListener('message', handler);
+
+          const na = data.noArtboard;
+          const wa = data.withArtboard;
+          log(`v${ver}: noArtboard=${na.loaded ? 'OK' : 'FAIL'} inputs=[${na.inputs||[]}] | withArtboard=${wa.loaded ? 'OK' : 'FAIL'} inputs=[${wa.inputs||[]}]`,
+            (na.loaded && na.inputs?.length > 0) || (wa.loaded && wa.inputs?.length > 0));
+
+          resolve(true);
+        }
+      } catch(ex) {}
+    });
+  });
+}
+
+(async () => {
+  log('Testing Rive CDN versions with membership_icons.riv...');
+  log('Looking for version where artboard + state machine inputs work.');
+  log('---');
+  for (const v of versions) {
+    await testVersion(v);
+  }
+  log('---');
+  log('Done! Use the version with inputs=[membership-type,hover] or similar.');
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Friends &amp; Family Paywall — Mobile</title>
+
+    <!-- CRITICAL: Initialize globals BEFORE any modules load -->
+    <script>
+      window.chesscom = window.chesscom || { features: [], settings: {} };
+      window.context = window.context || {};
+    </script>
+    <!-- Rive runtime v2.27.0 — compatible with the .riv file format -->
+    <script src="https://unpkg.com/@rive-app/canvas@2.27.0"></script>
+  </head>
+  <body class="dark-mode">
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

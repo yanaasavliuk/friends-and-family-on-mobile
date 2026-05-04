@@ -1,0 +1,13 @@
+node_modules/
+dist/
+dist-fnf/
+assets/
+.vite/
+*.local
+.DS_Store
+.env
+.env.local
+.env.*.local
+.idea
+*.log
+.wrangler/

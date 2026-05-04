@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Rive Membership Icons Test</title>
+<style>
+  body { background: #1a1a2e; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; color: white; font-family: sans-serif; }
+  canvas { background: transparent; }
+  #status { margin: 10px; font-size: 12px; max-width: 600px; white-space: pre-wrap; opacity: 0.7; max-height: 150px; overflow-y: auto; }
+  .controls { margin: 10px; }
+  button { padding: 8px 16px; margin: 4px; cursor: pointer; border-radius: 6px; border: none; font-size: 14px; }
+  button:nth-child(1) { background: #5eb4f0; color: white; }
+  button:nth-child(2) { background: #a0a0a0; color: white; }
+  button:nth-child(3) { background: #f0c040; color: #333; }
+</style>
+</head>
+<body>
+<h2>Rive Membership Test</h2>
+<canvas id="canvas" width="384" height="400"></canvas>
+<div class="controls">
+  <button onclick="switchTier(0)">Diamond</button>
+  <button onclick="switchTier(1)">Platinum</button>
+  <button onclick="switchTier(2)">Gold</button>
+</div>
+<div id="status">Loading Rive runtime...</div>
+
+<script>
+  const statusEl = document.getElementById('status');
+  function log(msg) { console.log(msg); statusEl.textContent += '\n' + msg; }
+</script>
+
+<!-- Try Canvas2D first (most compatible) -->
+<script src="https://unpkg.com/@rive-app/canvas@2.27.0"></script>
+<script>
+  let riveInstance = null;
+
+  function switchTier(val) {
+    if (!riveInstance) { log('Not loaded yet'); return; }
+    const inputs = riveInstance.stateMachineInputs('sm-main');
+    if (inputs) {
+      for (const input of inputs) {
+        if (input.name === 'membership-type') {
+          input.value = val;
+          log('Switched to tier ' + ['diamond','platinum','gold'][val]);
+          break;
+        }
+      }
+    } else {
+      log('No inputs found');
+    }
+  }
+
+  // Load the .riv from the same GitHub Pages location
+  const rivUrl = 'https://yanaasavliuk.github.io/2-step-paywall-experiment-new-animation/membership_icons.riv';
+
+  try {
+    log('Fetching .riv from: ' + rivUrl);
+    riveInstance = new rive.Rive({
+      src: rivUrl,
+      canvas: document.getElementById('canvas'),
+      autoplay: true,
+      artboard: 'memberships',
+      stateMachines: 'sm-main',
+      onLoad: () => {
+        log('✅ Loaded! Artboard: memberships');
+        const inputs = riveInstance.stateMachineInputs('sm-main');
+        if (inputs) {
+          log('Inputs: ' + inputs.map(i => i.name + '(type:' + i.type + ')').join(', '));
+        } else {
+          log('⚠️ No sm-main inputs. Trying other names...');
+        }
+        switchTier(0);
+      },
+      onLoadError: (e) => { log('❌ Load error: ' + JSON.stringify(e)); },
+    });
+    log('Rive instance created');
+  } catch (e) {
+    log('❌ Error: ' + e.message);
+  }
+</script>
+</body>
+</html>

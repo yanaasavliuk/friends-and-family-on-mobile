@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; }
+  body { background: transparent; overflow: hidden; }
+  canvas { width: 100vw; height: 100vh; display: block; }
+</style>
+</head>
+<body>
+<canvas id="rive-canvas"></canvas>
+<script type="module">
+  import RiveWebGL from 'https://unpkg.com/@rive-app/webgl2@2/bundled/rive_advanced.mjs';
+
+  const params = new URLSearchParams(window.location.search);
+  const tier = params.get('tier') || 'diamond';
+  const tierMap = { diamond: 0, platinum: 1, gold: 2 };
+
+  async function init() {
+    const rive = await RiveWebGL({
+      locateFile: () => 'https://unpkg.com/@rive-app/webgl2@2/bundled/rive.wasm'
+    });
+
+    const canvas = document.getElementById('rive-canvas');
+    const renderer = rive.makeRenderer(canvas);
+    const bytes = await (await fetch('membership_icons.riv')).arrayBuffer();
+    const file = await rive.load(new Uint8Array(bytes));
+    const artboard = file.defaultArtboard();
+    const machine = new rive.StateMachineInstance(
+      artboard.stateMachineByIndex(0),
+      artboard
+    );
+
+    // Find membership-type input and set tier
+    for (let i = 0; i < machine.inputCount(); i++) {
+      const input = machine.input(i);
+      if (input.name === 'membership-type') {
+        input.value = tierMap[tier] ?? 0;
+        break;
+      }
+    }
+
+    // Listen for tier changes from parent
+    window.addEventListener('message', (e) => {
+      if (e.data && e.data.tier) {
+        for (let i = 0; i < machine.inputCount(); i++) {
+          const input = machine.input(i);
+          if (input.name === 'membership-type') {
+            input.value = tierMap[e.data.tier] ?? 0;
+            break;
+          }
+        }
+      }
+    });
+
+    let lastTime = 0;
+    function renderLoop(time) {
+      if (!lastTime) lastTime = time;
+      const dt = (time - lastTime) / 1000;
+      lastTime = time;
+
+      renderer.clear();
+      if (machine) {
+        machine.advance(dt);
+        artboard.advance(dt);
+        renderer.save();
+        renderer.align(
+          rive.Fit.contain,
+          rive.Alignment.center,
+          { minX: 0, minY: 0, maxX: canvas.width, maxY: canvas.height },
+          artboard.bounds
+        );
+        artboard.draw(renderer);
+        renderer.restore();
+      }
+      rive.requestAnimationFrame(renderLoop);
+    }
+
+    // Resize canvas for sharp rendering
+    canvas.width = canvas.clientWidth * 2;
+    canvas.height = canvas.clientHeight * 2;
+
+    rive.requestAnimationFrame(renderLoop);
+  }
+
+  init();
+</script>
+</body>
+</html>

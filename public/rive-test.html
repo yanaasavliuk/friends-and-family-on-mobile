@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Rive Test</title>
+<style>
+  body { background: #1a1a2e; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; color: white; font-family: sans-serif; }
+  canvas { border: 1px solid rgba(255,255,255,0.2); background: transparent; }
+  #status { margin: 20px; font-size: 14px; max-width: 600px; word-wrap: break-word; }
+  .controls { margin: 10px; }
+  button { padding: 8px 16px; margin: 4px; cursor: pointer; }
+</style>
+</head>
+<body>
+<h2>Rive Runtime Test</h2>
+<canvas id="canvas" width="384" height="676"></canvas>
+<div id="status">Loading...</div>
+<div class="controls">
+  <button onclick="switchTier(0)">Diamond (0)</button>
+  <button onclick="switchTier(1)">Platinum (1)</button>
+  <button onclick="switchTier(2)">Gold (2)</button>
+</div>
+
+<script src="https://unpkg.com/@rive-app/canvas@2.27.0"></script>
+<script>
+  const statusEl = document.getElementById('status');
+  let riveInstance = null;
+
+  function log(msg) {
+    console.log(msg);
+    statusEl.textContent += '\n' + msg;
+  }
+
+  function switchTier(val) {
+    if (!riveInstance) return;
+    const inputs = riveInstance.stateMachineInputs('sm-main');
+    log('Inputs found: ' + JSON.stringify(inputs?.map(i => ({name: i.name, type: i.type}))));
+    if (inputs) {
+      for (const input of inputs) {
+        if (input.name === 'membership-type') {
+          input.value = val;
+          log('Set membership-type to ' + val);
+          break;
+        }
+      }
+    }
+  }
+
+  try {
+    riveInstance = new rive.Rive({
+      src: 'membership_icons.riv',
+      canvas: document.getElementById('canvas'),
+      autoplay: true,
+      artboard: 'memberships',
+      stateMachines: 'sm-main',
+      onLoad: () => {
+        log('✅ Rive loaded successfully!');
+        log('Artboard: ' + riveInstance.artboardName);
+        const inputs = riveInstance.stateMachineInputs('sm-main');
+        if (inputs) {
+          log('State machine inputs: ' + inputs.map(i => i.name + '(' + i.type + ')').join(', '));
+        } else {
+          log('⚠️ No inputs found for sm-main');
+          // Try other names
+          for (const name of ['State Machine 1', 'animation', 'sm-main']) {
+            const test = riveInstance.stateMachineInputs(name);
+            if (test) log('Found inputs with name: ' + name);
+          }
+        }
+        switchTier(0);
+      },
+      onLoadError: (e) => {
+        log('❌ Load error: ' + e);
+      },
+      onStateChange: (event) => {
+        log('State change: ' + JSON.stringify(event?.data));
+      },
+    });
+    log('Rive instance created (using Canvas2D renderer)');
+  } catch (e) {
+    log('❌ Error: ' + e.message);
+  }
+</script>
+</body>
+</html>
