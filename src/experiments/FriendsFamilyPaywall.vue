@@ -819,9 +819,10 @@ const ctaDisabled = computed(
 .paywall--tablet:not(.paywall--landscape) .tier-card-inner {
   height: 100%;
 }
-/* Figma portrait List has w-[150px] — constrain feature label area */
+/* Tablet portrait: features can use full inner card width with text wrapping
+   per new Figma 7102:124499 (e.g. "Unlimited Game Review" wraps to 2 lines). */
 .paywall--tablet:not(.paywall--landscape) .tier-features {
-  max-width: 150px;
+  width: 100%;
 }
 
 /* Tablet grid: 4 cards in a row */
@@ -1118,15 +1119,11 @@ const ctaDisabled = computed(
   line-height: 22px;
   color: var(--color-text-boldest, #fff);
 }
+/* Tablet (both orientations) — Heading/x-small-bold per Figma 7102:80777 / 7102:124499:
+   Chess Sans ExtraBold 22/28. */
 .paywall--tablet .tier-name {
-  font-size: 20px;
-  line-height: 24px;
-}
-/* Tablet portrait: cards are narrower — use Heading/xx-small-bold so titles like
-   "Friends & Family" fit on one line instead of wrapping. */
-.paywall--tablet:not(.paywall--landscape) .tier-name {
-  font-size: 17px;
-  line-height: 22px;
+  font-size: 22px;
+  line-height: 28px;
   font-weight: 800;
 }
 .tier-grid--carousel .tier-name {
@@ -1195,9 +1192,9 @@ const ctaDisabled = computed(
   align-items: flex-start;
   width: auto;
 }
-/* Feature spacing — 8px on mobile, 4px on tablet per Figma (denser layout). */
+/* Feature spacing — 8px everywhere per Figma 7102:80777 / 7102:124499 (gap-8). */
 .paywall--tablet .tier-features {
-  gap: 4px;
+  gap: 8px;
 }
 .tier-grid--carousel .tier-features {
   gap: 8px;
@@ -1243,10 +1240,12 @@ const ctaDisabled = computed(
   line-height: 16px;
   color: var(--color-text-boldest, #fff);
 }
-/* Tablet (portrait + landscape) uses Text/small-bold (12px / 16px) for features per Figma */
+/* Tablet (portrait + landscape): Text/medium-bold per Figma 7102 — Inter SemiBold 14/16. */
 .paywall--tablet .tier-feature-label {
-  font-size: 12px;
+  font-size: 14px;
   line-height: 16px;
+  /* Allow wrap to 2 lines on portrait where labels like "Unlimited Game Review" can break. */
+  white-space: normal;
 }
 .tier-grid--carousel .tier-feature-label {
   font-size: 14px;
@@ -1322,6 +1321,12 @@ const ctaDisabled = computed(
   color: var(--color-text-subtle, rgba(255, 255, 255, 0.50));
   text-decoration: line-through;
 }
+/* Tablet old-price strikethrough — Inter Regular 12/16 per Figma 7102:80296. */
+.paywall--tablet .tier-price-old {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--color-text-default, rgba(255, 255, 255, 0.72));
+}
 .tier-price {
   font-family: var(--font-family-heading, 'Chess Sans', sans-serif);
   font-size: 17px;
@@ -1329,9 +1334,11 @@ const ctaDisabled = computed(
   line-height: 22px;
   color: var(--color-text-boldest, #fff);
 }
+/* Tablet price — Chess Sans Bold (700) 22/28 per Figma 7102:80700 (NOT ExtraBold). */
 .paywall--tablet .tier-price {
-  font-size: 18px;
-  line-height: 24px;
+  font-size: 22px;
+  line-height: 28px;
+  font-weight: 700;
 }
 .tier-grid--carousel .tier-price {
   font-size: 22px;
@@ -1345,6 +1352,11 @@ const ctaDisabled = computed(
   font-weight: 400;
   line-height: 14px;
   color: var(--color-text-default, rgba(255, 255, 255, 0.72));
+}
+/* Tablet "billed annually" sub — Inter Regular 12/16 per Figma 7102:80298. */
+.paywall--tablet .tier-price-sub {
+  font-size: 12px;
+  line-height: 16px;
 }
 .tier-grid--carousel .tier-price-sub {
   font-size: 12px;
@@ -1457,11 +1469,12 @@ const ctaDisabled = computed(
   /* Pill sits inside the pricing block now — 12px gap above the pill */
   margin-top: 12px;
 }
-/* Tablet yearly: pill goes ABOVE the price (top of pricing block) */
+/* Tablet yearly: pill goes ABOVE the price in the same slot Gold/Platinum/Diamond
+   use for the strikethrough old-price. The pricing block's own gap-4 handles spacing
+   to the price below — no extra margin needed. Per Figma 7102:80647. */
 .paywall--tablet .tier-yearly-pill {
   order: -1;
-  margin-top: 0;
-  margin-bottom: 4px;
+  margin: 0;
 }
 /* Tablet monthly: pill renders as sibling of switch link, 8px above it.
    Switch link sits 16px from inner card bottom (via -8px margin-bottom on tier-bottom). */
