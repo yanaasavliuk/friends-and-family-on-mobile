@@ -496,11 +496,13 @@ const ctaDisabled = computed(
                 >{{ t.yearlyPlanOnly }}</div>
               </div>
 
-              <!-- Android Google Play disclaimer — applies to ALL plans (Gold,
-                   Platinum, Diamond, F&F). Per Figma 7066:52215 the "Mobile Phone"
-                   group sits 16px below pricing (parent gap-16). On F&F the YEARLY
-                   PLAN ONLY pill renders 24px above the disclaimer; on standard
-                   tiers only the disclaimer is shown. -->
+              <!-- Android: pill + Google Play disclaimer + (F&F monthly only) the
+                   switch-to-yearly link as a sibling group of pricing. Per Figma
+                   7066:52215 the "Mobile Phone" group sits 16px below pricing
+                   (parent gap-16) with 24px between pill and disclaimer.
+                   The disclaimer renders for all 4 tiers; the YEARLY PLAN ONLY
+                   pill only on F&F. On F&F monthly, the switch link replaces the
+                   disclaimer (matches iOS in-card behavior). -->
               <div
                 v-if="platform === 'android' && !isTablet"
                 class="tier-android-pill-group"
@@ -511,8 +513,20 @@ const ctaDisabled = computed(
                 >
                   {{ t.yearlyPlanOnly }}
                 </div>
+
+                <!-- F&F monthly: switch-to-yearly link (mirrors iOS in-card CTA). -->
+                <button
+                  v-if="tier.yearlyOnly && isMonthly"
+                  class="tier-switch-link tier-switch-link--android"
+                  type="button"
+                  @click.stop="handleSwitchToYearly"
+                >
+                  {{ t.switchToYearly }}
+                </button>
+
+                <!-- Yearly Google Play disclaimer (all tiers with a yearly price). -->
                 <p
-                  v-if="!isMonthly && pricing[tier.id].yearly"
+                  v-else-if="!isMonthly && pricing[tier.id].yearly"
                   class="tier-android-disclaimer"
                 >
                   {{ t.androidGooglePlayDisclaimerYearly(
@@ -520,6 +534,7 @@ const ctaDisabled = computed(
                     `$${formatPrice(pricing[tier.id].yearly!.monthlyRate)}/mo`
                   ) }}
                 </p>
+                <!-- Monthly Google Play disclaimer (Gold/Platinum/Diamond only). -->
                 <p
                   v-else-if="isMonthly && pricing[tier.id].monthly"
                   class="tier-android-disclaimer"
@@ -1529,6 +1544,16 @@ const ctaDisabled = computed(
   margin-top: 0;
   align-self: center;
   font-size: 13px;
+}
+
+/* Android F&F monthly: switch link sits inside the pill group (replaces disclaimer).
+   Parent gap-24 handles the space between pill and link. */
+.tier-switch-link--android {
+  margin: 0;
+  align-self: center;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 0;
 }
 
 /* ─── Carousel dots (active 10x10, inactive 6x6 per Figma) ───
