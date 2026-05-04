@@ -496,20 +496,36 @@ const ctaDisabled = computed(
                 >{{ t.yearlyPlanOnly }}</div>
               </div>
 
-              <!-- Android F&F: pill + Google Play disclaimer as a sibling group of
-                   pricing. Per Figma 7066:52215 the "Mobile Phone" group sits 16px
-                   below pricing (parent gap-16) with 24px between pill and disclaimer. -->
+              <!-- Android Google Play disclaimer — applies to ALL plans (Gold,
+                   Platinum, Diamond, F&F). Per Figma 7066:52215 the "Mobile Phone"
+                   group sits 16px below pricing (parent gap-16). On F&F the YEARLY
+                   PLAN ONLY pill renders 24px above the disclaimer; on standard
+                   tiers only the disclaimer is shown. -->
               <div
-                v-if="tier.yearlyOnly && platform === 'android' && !isTablet && !isMonthly && pricing[tier.id].yearly"
+                v-if="platform === 'android' && !isTablet"
                 class="tier-android-pill-group"
               >
-                <div class="tier-yearly-pill tier-yearly-pill--android">
+                <div
+                  v-if="tier.yearlyOnly"
+                  class="tier-yearly-pill tier-yearly-pill--android"
+                >
                   {{ t.yearlyPlanOnly }}
                 </div>
-                <p class="tier-android-disclaimer">
+                <p
+                  v-if="!isMonthly && pricing[tier.id].yearly"
+                  class="tier-android-disclaimer"
+                >
                   {{ t.androidGooglePlayDisclaimerYearly(
                     `$${formatPrice(pricing[tier.id].yearly!.annualTotal)}`,
                     `$${formatPrice(pricing[tier.id].yearly!.monthlyRate)}/mo`
+                  ) }}
+                </p>
+                <p
+                  v-else-if="isMonthly && pricing[tier.id].monthly"
+                  class="tier-android-disclaimer"
+                >
+                  {{ t.androidGooglePlayDisclaimerMonthly(
+                    `$${formatPrice(pricing[tier.id].monthly!.monthlyRate)}`
                   ) }}
                 </p>
               </div>
